@@ -40,6 +40,7 @@ func (s *serverConfig) isValid() bool {
 		s.MethodHTML != ""
 	return b
 }
+
 func (s *serverConfig) transform() {
 	s.Port, _ = strconv.Atoi(strings.Split(s.PortHTML, "：")[1]) //note: this is : in chinese ,not in english
 	s.Method = strings.Split(s.MethodHTML, ":")[1]
@@ -48,11 +49,13 @@ func (s *serverConfig) transform() {
 func main() {
 	var localPort int
 	var url string
+	var debug bool
 
 	log.SetOutput(os.Stdout)
 
 	flag.IntVar(&localPort, "l", 1080, "local socks5 proxy port")
 	flag.StringVar(&url, "s", "ss.ishadowx.com", "server address")
+	flag.BoolVar(&debug, "d", false, "print debug message")
 
 	flag.Parse()
 
@@ -61,17 +64,19 @@ func main() {
 	if err != nil {
 		log.Fatal("[autoiss-go] Failed to get shadowsocks server:", err)
 	}
-	runSS(server, localPort)
+	runSS(server, localPort, debug)
 }
 
-func runSS(s serverConfig, localPort int) {
+func runSS(s serverConfig, localPort int, debug bool) {
 	cmdStr := fmt.Sprintf("-s %s -p %d -k %s -l %d -m %s",
 		s.Address,
 		s.Port,
 		s.Password,
 		localPort,
 		s.Method)
-
+	if debug {
+		cmdStr = "-d " + cmdStr
+	}
 	log.Println("[autoiss-go] shadowsocks-local " + cmdStr)
 	cmd := exec.Command("shadowsocks-local", strings.Fields(cmdStr)...)
 
