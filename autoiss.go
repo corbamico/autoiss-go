@@ -1,54 +1,76 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
-
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/andrewstuart/goq"
 )
 
+var (
+	errParseHTML = errors.New("HTML not match ishadowx.com configuration")
+)
+
+// serverConfig show configuration information in ss.ishadowx.com
+// * Port is for connect to server ,but  as string "Port : 443" in HTML page
+//   ccs selector cannot deal with strings.Split, get it into PortHTML first
+// * Method showing as string "Method:aes-256-cfb" in HTML page, get it into
+//   MethodHTML first, and then call serverConfig.transform()
 type serverConfig struct {
-	serverAddress  string
-	serverPort     int
-	serverPassword string
-	serverMethod   string
+	Address    string `goquery:"h4:nth-child(1) > span[id]"`
+	Port       int
+	PortHTML   string `goquery:"h4:nth-child(2)"`
+	Password   string `goquery:"h4:nth-child(3) > span[id]"`
+	Method     string
+	MethodHTML string `goquery:"h4:nth-child(4)"`
+}
+
+func (s *serverConfig) isValid() bool {
+	b := s.Address != "" &&
+		s.PortHTML != "" &&
+		s.Password != "" &&
+		s.MethodHTML != ""
+	return b
+}
+func (s *serverConfig) transform() {
+	s.Port, _ = strconv.Atoi(strings.Split(s.PortHTML, "：")[1]) //note: this is : in chinese ,not in english
+	s.Method = strings.Split(s.MethodHTML, ":")[1]
 }
 
 func main() {
-	var localPort = 1080
-	var iShadowServer = "ss.ishadowx.com"
+	var localPort int
+	var url string
 
 	log.SetOutput(os.Stdout)
 
 	flag.IntVar(&localPort, "l", 1080, "local socks5 proxy port")
-	flag.StringVar(&iShadowServer, "s", "ss.ishadowx.com", "server address")
+	flag.StringVar(&url, "s", "ss.ishadowx.com", "server address")
 
 	flag.Parse()
 
-	server := getServerConfig(iShadowServer)
+	server, err := getServerConfig("http://" + url)
 
-	if server.serverPassword != "" {
-		runSS(server, localPort)
+	if err != nil {
+		log.Fatal("[autoiss-go] Failed to get shadowsocks server:", err)
 	}
-
-	log.Fatal("[autoiss-go] Failed to get shadowsocks server info.")
+	runSS(server, localPort)
 }
 
 func runSS(s serverConfig, localPort int) {
 	cmdStr := fmt.Sprintf("-s %s -p %d -k %s -l %d -m %s",
-		s.serverAddress,
-		s.serverPort,
-		s.serverPassword,
+		s.Address,
+		s.Port,
+		s.Password,
 		localPort,
-		s.serverMethod)
+		s.Method)
 
 	log.Println("[autoiss-go] shadowsocks-local " + cmdStr)
 	cmd := exec.Command("shadowsocks-local", strings.Fields(cmdStr)...)
@@ -66,38 +88,20 @@ func runSS(s serverConfig, localPort int) {
 	cmd.Wait()
 }
 
-func getServerConfig(url string) serverConfig {
+func getServerConfig(url string) (serverConfig, error) {
 	var server serverConfig
-	req, err := http.NewRequest("GET", "http://"+url, nil)
-	if err != nil {
-		log.Fatal("创建请求时出错错误", err)
-	}
-	//req.Header.Set("User-Agent", "Mozilla/5.0 (Arch Linux kernel 4.6.5) AppleWebKit/537.36 (KHTML, like Gecko) Maxthon/4.0 Chrome/39.0.2146.0 Safari/537.36")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal("发起请求时出错错误", err)
-	}
-	p, err := goquery.NewDocumentFromResponse(res)
-	if err != nil {
-		log.Fatal("解析html时出现错误", err)
-	}
 
-	divs := p.Find(".portfolio-items .portfolio-item")
-	for i := range divs.Nodes {
-		div := divs.Eq(i)
-		h4 := div.Find("h4")
-		serverPort, _ := strconv.Atoi(strings.Split(h4.Eq(1).Text(), "：")[1])
-		serverAddress := h4.Eq(0).Find("span[id]").First().Text()
-
-		server = serverConfig{
-			serverAddress:  serverAddress,
-			serverPort:     serverPort,
-			serverPassword: h4.Eq(2).Find("span[id]").First().Text(),
-			serverMethod:   strings.Split(h4.Eq(3).Text(), ":")[1],
-		}
-		//return first one
-		return server
-
+	doc, err := goquery.NewDocument(url)
+	if err != nil {
+		return server, err
 	}
-	return server
+	p := doc.Find(".portfolio-items .portfolio-item").First()
+
+	err = goq.UnmarshalSelection(p, &server)
+	if !server.isValid() {
+		err = errParseHTML
+	} else {
+		server.transform()
+	}
+	return server, err
 }
