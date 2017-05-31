@@ -11,9 +11,15 @@ autoiss-go
 
 ## Usage  使用
 ```shell
-autoiss-go -s <server> -l <local-port>
-    server     - ishadowsocks server address, default "ss.ishadowx.com"
-    local-port - sock5  proxy local-port,default 1080
+autoiss-go -s <server> -l <local-port> -n <index of servers>
+  -d    print debug message
+  -l int
+        local socks5 proxy port (default 1080)
+  -n int
+        which shadowsocks server to use.
+        (0:first one,-1:last one)
+  -s string
+        server address (default "ss.ishadowx.com")
 ```
 
 ## Reference 参考
