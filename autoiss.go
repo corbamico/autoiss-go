@@ -50,16 +50,18 @@ func main() {
 	var localPort int
 	var url string
 	var debug bool
+	var indexNumber int
 
 	log.SetOutput(os.Stdout)
 
 	flag.IntVar(&localPort, "l", 1080, "local socks5 proxy port")
 	flag.StringVar(&url, "s", "ss.ishadowx.com", "server address")
 	flag.BoolVar(&debug, "d", false, "print debug message")
+	flag.IntVar(&indexNumber, "n", 0, "which shadowsocks server to use.\n\t(0:first one,-1:last one)")
 
 	flag.Parse()
 
-	server, err := getServerConfig("http://" + url)
+	server, err := getServerConfig("http://"+url, indexNumber)
 
 	if err != nil {
 		log.Fatal("[autoiss-go] Failed to get shadowsocks server:", err)
@@ -93,14 +95,16 @@ func runSS(s serverConfig, localPort int, debug bool) {
 	cmd.Wait()
 }
 
-func getServerConfig(url string) (serverConfig, error) {
+func getServerConfig(url string, index int) (serverConfig, error) {
 	var server serverConfig
 
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		return server, err
 	}
-	p := doc.Find(".portfolio-items .portfolio-item").First()
+	//p := doc.Find(".portfolio-items .portfolio-item").First()
+	p := doc.Find(".portfolio-items .portfolio-item").Eq(index)
+	//p := pdoc.Eq(index)
 
 	err = goq.UnmarshalSelection(p, &server)
 	if !server.isValid() {
