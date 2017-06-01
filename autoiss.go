@@ -57,7 +57,7 @@ func main() {
 	flag.IntVar(&localPort, "l", 1080, "local socks5 proxy port")
 	flag.StringVar(&url, "s", "ss.ishadowx.com", "server address")
 	flag.BoolVar(&debug, "d", false, "print debug message")
-	flag.IntVar(&indexNumber, "n", 0, "which shadowsocks server to use.\n\t(0:first one,-1:last one)")
+	flag.IntVar(&indexNumber, "n", 0, "which shadowsocks server to use(default 0)\n\t0:first one,-1:last one\n\twe use last one if index exceeds max number")
 
 	flag.Parse()
 
@@ -102,11 +102,28 @@ func getServerConfig(url string, index int) (serverConfig, error) {
 	if err != nil {
 		return server, err
 	}
-	//p := doc.Find(".portfolio-items .portfolio-item").First()
-	p := doc.Find(".portfolio-items .portfolio-item").Eq(index)
-	//p := pdoc.Eq(index)
 
-	err = goq.UnmarshalSelection(p, &server)
+	s := doc.Find(".portfolio-items .portfolio-item")
+
+	switch {
+	//return err, if we got empty server info
+	case len(s.Nodes) == 0:
+		return server, errParseHTML
+
+	//we use first one if index < -len(s.Nodes)
+	case index < 0:
+		index += len(s.Nodes)
+		if index < 0 {
+			index = 0
+		}
+	//we use last one if index > len(s.Nodes)-1
+	case index > 0:
+		if index >= len(s.Nodes) {
+			index = len(s.Nodes) - 1
+		}
+	}
+
+	err = goq.UnmarshalSelection(s.Eq(index), &server)
 	if !server.isValid() {
 		err = errParseHTML
 	} else {
