@@ -105,23 +105,15 @@ func getServerConfig(url string, index int) (serverConfig, error) {
 
 	s := doc.Find(".portfolio-items .portfolio-item")
 
-	switch {
 	//return err, if we got empty server info
-	case len(s.Nodes) == 0:
+	if len(s.Nodes) == 0 {
 		return server, errParseHTML
+	}
 
 	//we use first one if index < -len(s.Nodes)
-	case index < 0:
-		index += len(s.Nodes)
-		if index < 0 {
-			index = 0
-		}
 	//we use last one if index > len(s.Nodes)-1
-	case index > 0:
-		if index >= len(s.Nodes) {
-			index = len(s.Nodes) - 1
-		}
-	}
+	index = min(index, len(s.Nodes)-1)
+	index = max(index, -len(s.Nodes))
 
 	err = goq.UnmarshalSelection(s.Eq(index), &server)
 	if !server.isValid() {
@@ -130,4 +122,21 @@ func getServerConfig(url string, index int) (serverConfig, error) {
 		server.transform()
 	}
 	return server, err
+}
+
+func min(a int, b int) (min int) {
+	if a <= b {
+		min = a
+	} else {
+		min = b
+	}
+	return
+}
+func max(a int, b int) (max int) {
+	if a <= b {
+		max = b
+	} else {
+		max = a
+	}
+	return
 }
