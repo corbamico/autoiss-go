@@ -4,7 +4,8 @@ automatic generate config.json for shadowsocks-go/shadowsocks-local cmd accordin
 inspired by  github.com/ystyle/autoss-go
 
 ## log 开发日志
-* 11.26.2017 change site to https://go.ishadowx.net
+
+* 11.26.2017 change site to [ishadowx](https://go.ishadowx.net)
 
 ## Install 安装
 
