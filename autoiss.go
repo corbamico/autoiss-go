@@ -42,7 +42,9 @@ func (s *serverConfig) isValid() bool {
 }
 
 func (s *serverConfig) transform() {
-	s.Port, _ = strconv.Atoi(strings.Split(s.PortHTML, "：")[1]) //note: this is : in chinese ,not in english
+	//note: this is : in chinese ,not in english
+	//note: 20171126, ':' changed  to  in english
+	s.Port, _ = strconv.Atoi(strings.Split(s.PortHTML, ":")[1])
 	s.Method = strings.Split(s.MethodHTML, ":")[1]
 }
 
@@ -61,7 +63,7 @@ func main() {
 
 	flag.Parse()
 
-	server, err := getServerConfig("http://"+url, indexNumber)
+	server, err := getServerConfig("https://"+url, indexNumber)
 
 	if err != nil {
 		log.Fatal("[autoiss-go] Failed to get shadowsocks server:", err)
@@ -103,7 +105,11 @@ func getServerConfig(url string, index int) (serverConfig, error) {
 		return server, err
 	}
 
-	s := doc.Find(".portfolio-items .portfolio-item")
+	//Notes 20171126
+	//      class="portfolio-items isotope"
+	//      but I cannot find exact dot syntac present this class
+	//s := doc.Find(".portfolio-items .isotope .portfolio-item")
+	s := doc.Find(".row .portfolio-item")
 
 	//return err, if we got empty server info
 	if len(s.Nodes) == 0 {

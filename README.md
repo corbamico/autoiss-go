@@ -3,6 +3,9 @@
 automatic generate config.json for shadowsocks-go/shadowsocks-local cmd according to iss  website.
 inspired by  github.com/ystyle/autoss-go
 
+## log 开发日志
+* 11.26.2017 change site to https://go.ishadowx.net
+
 ## Install 安装
 
 ```shell
@@ -22,7 +25,7 @@ autoiss-go -s <server> -l <local-port> -n <index of servers>
         which shadowsocks server to use.
         (0:first one,-1:last one)
   -s string
-        server address (default "ss.ishadowx.com")
+        server address (default "go.ishadowx.net")
 ```
 
 ## Reference 参考
