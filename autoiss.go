@@ -17,6 +17,7 @@ import (
 
 var (
 	errParseHTML = errors.New("HTML not match ishadowx.com configuration")
+	ishadowxURL = "global.ishadowx.net"
 )
 
 // serverConfig show configuration information in ss.ishadowx.com
@@ -57,7 +58,7 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	flag.IntVar(&localPort, "l", 1080, "local socks5 proxy port")
-	flag.StringVar(&url, "s", "go.ishadowx.net", "server address")
+	flag.StringVar(&url, "s", ishadowxURL, "server address")
 	flag.BoolVar(&debug, "d", false, "print debug message")
 	flag.IntVar(&indexNumber, "n", 0, "which shadowsocks server to use(default 0)\n\t0:first one,-1:last one\n\twe use last one if index exceeds max number")
 

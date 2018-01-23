@@ -3,8 +3,11 @@
 automatic generate config.json for shadowsocks-go/shadowsocks-local cmd according to iss  website.
 inspired by  github.com/ystyle/autoss-go
 
+自动获取 https://global.ishadowx.com/ free shadowsock 配置，自动运行shadowsocks-local
+
 ## log 开发日志
 
+* 01.23.2018 change site to [ishadowx](https://global.ishadowx.net)
 * 11.26.2017 change site to [ishadowx](https://go.ishadowx.net)
 
 ## Install 安装
